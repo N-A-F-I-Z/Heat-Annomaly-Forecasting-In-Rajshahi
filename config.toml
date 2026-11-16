@@ -1,0 +1,43 @@
+# Rajshahi extreme-heat probabilistic forecasting experiment
+# All dates are calendar days. Temperatures are stored in °C.
+
+[location]
+name = "Rajshahi"
+lat = 24.3745
+lon = 88.6042
+buffer_m = 0            # 0 = the single ERA5-Land cell containing the point; e.g. 10000 = mean over a 10 km radius
+
+[data]
+start = "1991-01-01"
+end = "2025-12-31"
+source = "openmeteo"     # gee | openmeteo | synthetic (openmeteo used here to get familiar with an alternative to the traditional GEE pipeline)
+path = "data/rajshahi_tmax_daily.csv"
+gee_project = ""        # your Google Cloud project registered for Earth Engine (or set EE_PROJECT)
+
+[event]
+quantile = 0.90         # hot-day threshold = calendar-day 90th percentile of Tmax
+base_start = 1991       # WMO 1991-2020 climate normal; must end before the first test year
+base_end = 2020
+window_halfwidth = 7    # ±7-day pooling window when estimating the calendar-day percentile
+horizon_days = 7        # forecast window: issue day t through t+6
+min_hot_days = 2        # event = at least this many hot days in the window
+season_start = "04-01"  # first issue date
+season_end = "05-31"    # last day a forecast window may cover (last issue date = May 25)
+
+[hindcast]
+train_start = 1991
+test_start = 2021
+test_end = 2025
+data_latency_days = 1   # newest usable observation is t - latency (1 = yesterday)
+extended_test_start = 2001   # robustness check: expanding-window hindcast over 2001-2025
+
+[models]
+clim_window_halfwidth = 7    # Model A pools historical issue dates within ±7 days of the calendar date
+logit_C = 1.0                # inverse L2 regularisation strength for the logistic models
+latency_sweep = [1, 2, 3, 5, 7, 10]
+
+[verification]
+n_bins = 10
+n_boot = 2000
+block_len = 7           # moving-block bootstrap length (days) to respect autocorrelation
+seed = 42
